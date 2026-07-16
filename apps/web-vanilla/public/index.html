@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spot Widget Example (Vanilla JS)</title>
+    <link rel="stylesheet" href="styles.css" />
+
+    <!--
+      The core widget as a plain script tag, no bundler. unpkg resolves the
+      package to its UMD build. Note the class is exposed as SpotWidget.default
+      (not SpotWidget), which app.js accounts for.
+      Alternatively, vendor dist/index.umd.js and serve it locally.
+    -->
+    <script src="https://unpkg.com/@getspot/spot-widget@4.3.1"></script>
+
+    <!--
+      Configuration a partner would edit. Kept inline so there is nothing to
+      build. The client secret is NOT here; only the public partner id, and the
+      backend URL that performs accept/decline.
+    -->
+    <script>
+      window.SPOT_CONFIG = {
+        environment: "sandbox",
+        partnerId: "your-sandbox-partner-id",
+        backendUrl: "http://localhost:8787",
+        product: {
+          productId: "maxduration",
+          productType: "Registration",
+          productDuration: "Event",
+          eventType: "Concert",
+          productPrice: 500,
+          startOffsetDays: 10,
+          coverageDays: 2,
+        },
+      };
+    </script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="app__header">
+        <div>
+          <h1>Spot widget example (vanilla JS)</h1>
+          <p class="muted">
+            No framework, no bundler. Plain HTML and JavaScript consuming the
+            core <code>@getspot/spot-widget</code> UMD build.
+          </p>
+        </div>
+        <div class="badges">
+          <span class="badge" id="env-badge"></span>
+          <span class="badge" id="partner-badge"></span>
+        </div>
+      </header>
+
+      <main class="app__grid">
+        <div class="app__column">
+          <section class="panel">
+            <div class="panel__header"><h2>Booking</h2></div>
+            <div class="field">
+              <label for="productPrice">Product price</label>
+              <input id="productPrice" type="number" min="0" />
+            </div>
+            <button class="button button--primary" id="update-quote">
+              Update quote
+            </button>
+          </section>
+
+          <section class="panel">
+            <div class="panel__header"><h2>Purchaser</h2></div>
+            <div class="field">
+              <label for="firstName">First name</label>
+              <input id="firstName" type="text" value="Test" />
+            </div>
+            <div class="field">
+              <label for="lastName">Last name</label>
+              <input id="lastName" type="text" value="Purchaser" />
+            </div>
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" type="email" value="test.purchaser@example.com" />
+            </div>
+          </section>
+        </div>
+
+        <div class="app__column">
+          <section class="panel">
+            <div class="panel__header"><h2>Widget</h2></div>
+            <p class="notice notice--warn" id="widget-notice" hidden></p>
+            <div id="spot-widget" class="widget-host"></div>
+            <button class="button button--primary" id="checkout">
+              Proceed to checkout
+            </button>
+            <p class="muted">
+              Checkout validates the selection, reads it with getSelection(), and
+              posts it to the backend to accept or decline.
+            </p>
+          </section>
+
+          <section class="panel panel--seam" id="result-panel" hidden>
+            <div class="panel__header"><h2 id="result-title">Result</h2></div>
+            <p id="result-status" class="notice"></p>
+            <pre class="log__detail" id="result-body"></pre>
+          </section>
+        </div>
+
+        <div class="app__column">
+          <section class="panel">
+            <div class="panel__header">
+              <h2>Widget events</h2>
+              <button class="button button--ghost" id="clear-events">Clear</button>
+            </div>
+            <ul class="log" id="event-log"></ul>
+          </section>
+
+          <section class="panel">
+            <div class="panel__header">
+              <h2>Webhooks</h2>
+              <button class="button button--ghost" id="simulate-webhook">
+                Simulate delivery
+              </button>
+            </div>
+            <ul class="log" id="webhook-log"></ul>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
