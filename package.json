@@ -1,0 +1,16 @@
+{
+  "name": "spot-widget-example",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sample partner integration for the Spot widget. Demonstrates a realistic quote, accept, and decline flow.",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter web-react dev",
+    "dev:all": "pnpm --parallel --filter web-react --filter server run dev",
+    "build": "pnpm --filter web-react build",
+    "preview": "pnpm --filter web-react preview"
+  }
+}

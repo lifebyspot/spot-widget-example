@@ -1,0 +1,278 @@
+:root {
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --border: #e3e6ea;
+  --text: #1c2530;
+  --muted: #6b7683;
+  --primary: #2f6df6;
+  --primary-text: #ffffff;
+  --warn-bg: #fff4d6;
+  --warn-text: #7a5b00;
+  --seam: #eef3ff;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.app__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.app__header h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+}
+
+.badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  background: #eef1f5;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.badge--warn {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border-color: #f0dfa8;
+}
+
+.app__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.app__column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.panel--seam {
+  background: var(--seam);
+  border-color: #c9d9ff;
+}
+
+.panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.panel__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.panel__header h2 {
+  margin: 0;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.field {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-row {
+  display: flex;
+  gap: 12px;
+}
+
+.field-row .field {
+  flex: 1;
+  /* Allow the flex fields to shrink below their inputs' intrinsic width,
+     otherwise a two-column row (e.g. first/last name) overflows horizontally. */
+  min-width: 0;
+}
+
+.field label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.field input,
+.field select {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  /* Fill the field and never exceed it (box-sizing is border-box globally). */
+  width: 100%;
+  min-width: 0;
+}
+
+.button {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.button--primary {
+  background: var(--primary);
+  color: var(--primary-text);
+  width: 100%;
+}
+
+.button--primary:disabled {
+  background: #b9c6dc;
+  cursor: default;
+}
+
+.button--ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  font-weight: 500;
+}
+
+.widget-host {
+  min-height: 120px;
+  margin-bottom: 12px;
+}
+
+.notice {
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+.notice--warn {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border: 1px solid #f0dfa8;
+}
+
+.notice--error {
+  background: #fdecec;
+  color: #8a1f1f;
+  border: 1px solid #f2c2c2;
+}
+
+.notice--ok {
+  background: #e7f6ec;
+  color: #1c6b3c;
+  border: 1px solid #b7e0c4;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+.log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+.log__item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.log__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.log__label {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.log__time {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.log__detail {
+  margin: 8px 0 0;
+  background: #f2f4f7;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+code {
+  background: #eef1f5;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+
+.tag--ok {
+  background: #e7f6ec;
+  color: #1c6b3c;
+}
+
+.tag--bad {
+  background: #fdecec;
+  color: #8a1f1f;
+}
