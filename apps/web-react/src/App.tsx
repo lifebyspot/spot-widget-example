@@ -43,10 +43,14 @@ export function App() {
 
   function addLog(label: string, detail?: unknown) {
     logIdRef.current += 1;
+    // Capture the id now, not inside the updater: when several addLog calls
+    // land in one tick the ref has already advanced by the time the queued
+    // updaters run, so reading it lazily would give every entry the same id.
+    const id = logIdRef.current;
     setEntries((current) =>
       [
         {
-          id: logIdRef.current,
+          id,
           time: new Date().toLocaleTimeString(),
           label,
           detail,
