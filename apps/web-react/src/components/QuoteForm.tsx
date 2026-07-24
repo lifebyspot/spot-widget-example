@@ -1,8 +1,10 @@
-import type { QuoteItem } from "../types";
+import type { QuoteItem } from "@getspot/spot-widget";
 
 interface QuoteFormProps {
   value: QuoteItem;
   onChange: (next: QuoteItem) => void;
+  onApply: () => void;
+  dirty: boolean;
 }
 
 const PRODUCT_TYPES: QuoteItem["productType"][] = ["Trip", "Pass", "Registration"];
@@ -23,7 +25,7 @@ function fromDateInput(value: string): string {
 }
 
 /** Editable view of the fields a partner most commonly varies per booking. */
-export function QuoteForm({ value, onChange }: QuoteFormProps) {
+export function QuoteForm({ value, onChange, onApply, dirty }: QuoteFormProps) {
   function update<Key extends keyof QuoteItem>(key: Key, next: QuoteItem[Key]) {
     onChange({ ...value, [key]: next });
   }
@@ -181,6 +183,15 @@ export function QuoteForm({ value, onChange }: QuoteFormProps) {
           />
         </div>
       </div>
+
+      <button
+        type="button"
+        className="button button--primary"
+        onClick={onApply}
+        disabled={!dirty}
+      >
+        {dirty ? "Apply changes and re-quote" : "Quote is up to date"}
+      </button>
     </section>
   );
 }

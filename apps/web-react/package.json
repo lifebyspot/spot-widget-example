@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@getspot/spot-widget": "^4.5.0",
+    "@getspot/spot-widget-react": "^4.5.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

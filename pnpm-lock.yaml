@@ -39,11 +39,11 @@ importers:
   apps/web-react:
     dependencies:
       '@getspot/spot-widget':
-        specifier: ^4.3.1
-        version: 4.3.1
+        specifier: ^4.5.0
+        version: 4.5.0
       '@getspot/spot-widget-react':
-        specifier: ^4.3.1
-        version: 4.3.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^4.5.0
+        version: 4.5.0(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -448,16 +448,16 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@getspot/spot-widget-react@4.3.1':
-    resolution: {integrity: sha512-3jjx1IMxGC7f68XNDvjH4Z4G1LbYIih+RT8SiM/l/ryyVu6KxBDvfgL9kxPTMZyoI5WPwCjSFqtHSLQ/8bNsow==}
+  '@getspot/spot-widget-react@4.5.0':
+    resolution: {integrity: sha512-N3jumDWfPb2IP1Iwcz5jHHUdwHJ5MG7VGJdtoeZ3fC7NavpjhOTm8S+jFaHdXUVGaG5KrGMGeHZl2P0Ic6b8BA==}
     peerDependencies:
       '@types/react': '>=18.0.0'
       '@types/react-dom': '>=18.0.0'
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@getspot/spot-widget@4.3.1':
-    resolution: {integrity: sha512-I6a5hrABztl59aRghsS/27IZKrH10gMh2E2HhHDlsiasZgPyQnjvClBmzNzkOjiz6WBg4hRi1rRWnfEwprJwTg==}
+  '@getspot/spot-widget@4.5.0':
+    resolution: {integrity: sha512-6Vm55b7iklv6mXW0pO8GfvMmX4YwsMLJaw7mSyd4hcZZch6cAT37UwzDW/BlLtyNF4gEKTRCJ5lZGNu0Jk8oXg==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -1383,15 +1383,15 @@ snapshots:
   '@esbuild/win32-x64@0.28.1':
     optional: true
 
-  '@getspot/spot-widget-react@4.3.1(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@getspot/spot-widget-react@4.5.0(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@getspot/spot-widget': 4.3.1
+      '@getspot/spot-widget': 4.5.0
       '@types/react': 18.3.31
       '@types/react-dom': 18.3.7(@types/react@18.3.31)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@getspot/spot-widget@4.3.1': {}
+  '@getspot/spot-widget@4.5.0': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
