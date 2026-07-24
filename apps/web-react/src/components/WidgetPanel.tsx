@@ -16,8 +16,9 @@ interface WidgetPanelProps {
 }
 
 /**
- * Hosts the Spot widget. Its only job here is to request and render a quote;
- * capturing the customer's selection at checkout comes in the next step.
+ * Hosts the widget and the partner's own checkout button. The widget only
+ * captures a yes/no selection client-side; at checkout we validate it and read
+ * it with getSelection(), then hand it up.
  */
 export function WidgetPanel({
   widgetRef,
@@ -47,6 +48,9 @@ export function WidgetPanel({
           onNoMatchingQuote={onNoMatchingQuote}
         />
       </div>
+      <button type="submit" className="button button--primary">
+        Proceed to checkout
+      </button>
     </section>
   );
 }
