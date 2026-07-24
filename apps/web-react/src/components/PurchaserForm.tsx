@@ -1,4 +1,4 @@
-import type { Purchaser } from "../bff";
+import type { Purchaser } from "../types";
 
 interface PurchaserFormProps {
   value: Purchaser;

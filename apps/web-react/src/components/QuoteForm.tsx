@@ -1,22 +1,20 @@
-import type { QuoteItem } from "@getspot/spot-widget";
+import type { Booking } from "../types";
 
 interface QuoteFormProps {
-  value: QuoteItem;
-  onChange: (next: QuoteItem) => void;
-  onApply: () => void;
-  dirty: boolean;
+  value: Booking;
+  onChange: (next: Booking) => void;
 }
 
-const PRODUCT_TYPES: QuoteItem["productType"][] = ["Trip", "Pass", "Registration"];
-const PRODUCT_DURATIONS: QuoteItem["productDuration"][] = [
+const PRODUCT_TYPES: Booking["productType"][] = ["Trip", "Pass", "Registration"];
+const PRODUCT_DURATIONS: Booking["productDuration"][] = [
   "Trip",
   "Daily",
   "Seasonal",
   "Event",
 ];
-const CURRENCIES: QuoteItem["currencyCode"][] = ["USD", "CAD", "GBP", "EUR", "AUD"];
+const CURRENCIES: Booking["currencyCode"][] = ["USD", "CAD", "GBP", "EUR", "AUD"];
 
-// The widget wants ISO datetime strings; a date input speaks "YYYY-MM-DD".
+// A date input speaks "YYYY-MM-DD"; the booking stores ISO datetime strings.
 function toDateInput(iso: string): string {
   return iso.slice(0, 10);
 }
@@ -25,12 +23,12 @@ function fromDateInput(value: string): string {
 }
 
 /**
- * Editable view of the fields a partner most commonly varies per booking.
- * Applying changes calls the widget's updateQuote(), which triggers a fresh
- * quote request against the API.
+ * Editable view of the booking a partner most commonly varies. In this baseline
+ * app the edits just update local state; once the Spot widget is added, applying
+ * changes will re-quote through the widget's updateQuote().
  */
-export function QuoteForm({ value, onChange, onApply, dirty }: QuoteFormProps) {
-  function update<Key extends keyof QuoteItem>(key: Key, next: QuoteItem[Key]) {
+export function QuoteForm({ value, onChange }: QuoteFormProps) {
+  function update<Key extends keyof Booking>(key: Key, next: Booking[Key]) {
     onChange({ ...value, [key]: next });
   }
 
@@ -80,7 +78,7 @@ export function QuoteForm({ value, onChange, onApply, dirty }: QuoteFormProps) {
             id="productType"
             value={value.productType}
             onChange={(event) =>
-              update("productType", event.target.value as QuoteItem["productType"])
+              update("productType", event.target.value as Booking["productType"])
             }
           >
             {PRODUCT_TYPES.map((type) => (
@@ -99,7 +97,7 @@ export function QuoteForm({ value, onChange, onApply, dirty }: QuoteFormProps) {
             onChange={(event) =>
               update(
                 "productDuration",
-                event.target.value as QuoteItem["productDuration"],
+                event.target.value as Booking["productDuration"],
               )
             }
           >
@@ -155,10 +153,7 @@ export function QuoteForm({ value, onChange, onApply, dirty }: QuoteFormProps) {
             id="currencyCode"
             value={value.currencyCode}
             onChange={(event) =>
-              update(
-                "currencyCode",
-                event.target.value as QuoteItem["currencyCode"],
-              )
+              update("currencyCode", event.target.value as Booking["currencyCode"])
             }
           >
             {CURRENCIES.map((currency) => (
@@ -187,14 +182,6 @@ export function QuoteForm({ value, onChange, onApply, dirty }: QuoteFormProps) {
           />
         </div>
       </div>
-
-      <button
-        className="button button--primary"
-        onClick={onApply}
-        disabled={!dirty}
-      >
-        {dirty ? "Apply changes and re-quote" : "Quote is up to date"}
-      </button>
     </section>
   );
 }
