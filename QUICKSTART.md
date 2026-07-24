@@ -13,15 +13,17 @@ the more detailed example walkthrough that follows.
 
 ### 1. Retrieving Quotes from Spot
 
-To start, calls to the Spot API will retrieve a ***quote*** to present to customers 
-as part of your checkout flow. At its most basic level, a quote represents the 
-calculated price of coverage the customer can expect to pay and what coverage they
-will receive upon accepting the quote. Quote details are displayed in the widget, 
-where customers then choose whether to accept or decline coverage.
-
-API calls to retrieve a quote only require your `partnerId` (no secret values) for 
+To start, calls to the Spot API will retrieve a quote to present to customers 
+as part of your checkout flow. API calls to retrieve a quote only require your `partnerId` (no secret values) for 
 authentication, and so can be handled entirely on the frontend as part of adding the 
 widget to your app's UI. 
+
+> 📝 **Terminology: Quote**
+> 
+> A ***Quote*** represents the calculated price of coverage 
+> the customer can expect to pay and what coverage they will receive upon accepting 
+> the quote. Quote details are displayed in the widget, where customers then choose 
+> whether to accept or decline coverage.
 
 We'll dive more into these calls and how to handle them in Step 1 of the walkthrough 
 below.
@@ -34,9 +36,12 @@ endpoints, depending on the customer's final submitted selection:
 - `POST /api/v1/quote/{id}/accept`
 - `POST /api/v1/quote/{id}/decline`
 
-> 📝 **Terminology**: When the `/accept` endpoint is called, Spot creates what we call an 
-> ***enrollment*** for the customer from the quote. Post-checkout actions for accepted 
-> quotes will be taken on this enrollment entity.
+Accepting the quote creates an enrollment, while declining marks the quote as not
+accepted on Spot's side.
+
+> 📝 **Terminology: Enrollment**
+>
+> When a customer accepts coverage and your app reports that to Spot, Spot creates an ***Enrollment*** from the quote: the record of the coverage the customer purchased. Post-checkout activity (claims, status changes, and the webhooks covered below) acts on the enrollment, not the quote.
 
 The accept and decline endpoints both require your app to fetch a valid OAuth token 
 from Spot for authorization, and so will need to go through your backend rather than 
@@ -150,7 +155,9 @@ export const apiConfig: ApiConfig = {
 Retrieving a quote needs only your `partnerId`, a public value that's safe to
 use in the browser. (The OAuth client id and secret aren't needed until Step 3.)
 
-> 📝 **Getting Sandbox credentials.** Spot provisions your partner id (and, in
+> 📝 **Getting Sandbox credentials** 
+> 
+> Spot provisions your partner id (and, in
 > Step 3, your client id and secret) per environment; there is no self-serve
 > signup, so request Sandbox credentials from your Spot contact.
 >
@@ -608,13 +615,32 @@ in the next step.
 Run `pnpm dev`, pick an option, and click Proceed to checkout: the captured
 selection appears. Next we send it to a backend.
 
-### Storing and validating the `quoteId` in a real checkout flow
+#### Beyond the example: carrying the `quoteId` to checkout
 
 This example keeps things simple: the widget stays mounted, so at checkout it
 reads the `quoteId` straight from `getSelection()`. Real checkouts often submit
 the order on a different screen, step, or request, where the widget may no
-longer be mounted. There, capture the `quoteId` when the quote is retrieved and
-carry it through to the point where you call your backend.
+longer be mounted. In such cases, you should capture the `quoteId` when the quote 
+is retrieved and carry it through to the point where you call your backend. 
+
+**Two rules always apply, regardless of where you store it:**
+> ⚠️ **Quotes have expiries! Check before you submit.**
+>
+> Every quote carries an
+> expiration timestamp (`expiresAt` on the quote response). Before completing
+> checkout and calling the accept/decline endpoints, confirm the stored quote
+> has not expired. **Spot will not accept an expired quote.** If it has
+> expired, re-quote the customer (via `updateQuote()` or a fresh quote request)
+> and submit the new, non-expired `quoteId` instead. This matters most in
+> multi-step and form-based flows, where meaningful time can pass between
+> quoting and submitting.
+
+> ⚠️ **Re-quoting replaces the id.**
+> 
+> Every `updateQuote()` (a
+> booking edit, or a fresh quote after expiry) produces a new quote with a new
+> `quote.id`. Always overwrite the stored id with the latest, and never submit a
+> `quoteId` from a booking the customer has since changed.
 
 The id arrives in `onQuoteRetrieved` as `quote.id`:
 
@@ -625,57 +651,45 @@ onQuoteRetrieved={(quote) => {
 }}
 ```
 
-> ⚠️ **Quotes expire; check before you submit.** Every quote carries an
-> expiration timestamp (`expiresAt` on the quote response). Before completing
-> checkout and calling the accept/decline endpoints, confirm the stored quote
-> has not expired. **Spot will not accept an expired quote.** If it has
-> expired, re-quote the customer (via `updateQuote()` or a fresh quote request)
-> and submit the new, non-expired `quoteId` instead. This matters most in
-> multi-step and form-based flows, where meaningful time can pass between
-> quoting and submitting.
+**Where to keep it depends on your checkout architecture:**
 
-A related caveat: **re-quoting replaces the id.** Every `updateQuote()` (a
-booking edit, or a fresh quote after expiry) produces a new quote with a new
-`quote.id`. Always overwrite the stored id with the latest, and never submit a
-`quoteId` from a booking the customer has since changed.
-
-**Batch quotes.** Quoting a cart of several items at once (a `BatchQuoteRequest`)
-changes the shape, not the principle. The response comes back as `quotes[]`
-(status `QUOTES_AVAILABLE`), and the selection carries `batchQuoteDetails`: one
-`{ quoteId, cartItemId, productPrice }` per item. Store and expiry-check each id
-(keyed by `cartItemId`) the same way, and at checkout accept/decline each
-`quoteId` separately, producing one enrollment per accepted item, rather than a
-single call.
-
-**Single-page apps.** The widget and your checkout share one long-lived page.
+- **Single-page apps.** The widget and your checkout share one long-lived page.
 Hold the latest `quote.id` (and the choice from `onOptIn` / `onOptOut`) in app
 state (React state, context, or a store like Redux/Zustand). At submit, either
 read `getSelection()` as the sample does, or use the value you stashed; the
 stash helps when the submit handler is far from the widget component.
 
-**Multi-step / wizard flows.** The widget lives on an early step and the order
+- **Multi-step / wizard flows.** The widget lives on an early step and the order
 is submitted several steps later, after navigation that may unmount it. Persist
 the `quoteId` and selection somewhere that survives those transitions: a store
 that outlives the route, URL/query state, `sessionStorage`, or your own
 server-side cart/session for the checkout. Refresh the stored id whenever the
 customer goes back and edits the booking (each edit re-quotes).
 
-**Traditional form-based checkout.** A server-rendered form POST has no
+- **Traditional form-based checkout.** A server-rendered form POST has no
 persistent JS state across the submit. Write the `quoteId` and selection into
 hidden inputs, kept in sync from the widget callbacks, so they post with the
 rest of the form to your backend:
 
-```html
-<!-- pattern (not in the sample) -->
-<input type="hidden" name="spotQuoteId" value="" />
-<input type="hidden" name="spotSelection" value="" />
-```
+  ```html
+  <!-- pattern (not in the sample) -->
+  <input type="hidden" name="spotQuoteId" value="" />
+  <input type="hidden" name="spotSelection" value="" />
+  ```
 
-```js
-onQuoteRetrieved = (quote) => { form.spotQuoteId.value = quote.id; };
-onOptIn  = () => { form.spotSelection.value = "accept";  };
-onOptOut = () => { form.spotSelection.value = "decline"; };
-```
+  ```js
+  onQuoteRetrieved = (quote) => { form.spotQuoteId.value = quote.id; };
+  onOptIn  = () => { form.spotSelection.value = "accept";  };
+  onOptOut = () => { form.spotSelection.value = "decline"; };
+  ```
+
+- **Batch quotes.** Quoting a cart of several items at once (a `BatchQuoteRequest`)
+changes the shape, not the principle. The response comes back as `quotes[]`
+(status `QUOTES_AVAILABLE`), and the selection carries `batchQuoteDetails`: one
+`{ quoteId, cartItemId, productPrice }` per item. Store and expiry-check each id
+(keyed by `cartItemId`) the same way, and at checkout accept/decline each
+`quoteId` separately, producing one enrollment per accepted item, rather than a
+single call.
 
 However you carry it, the destination is the same as Step 3: your backend
 receives the `quoteId` and the accept/decline choice, then makes the
