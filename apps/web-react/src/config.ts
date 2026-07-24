@@ -11,3 +11,7 @@ export const apiConfig: ApiConfig = {
     ? { customEndpoint: import.meta.env.VITE_SPOT_CUSTOM_ENDPOINT }
     : {}),
 };
+
+// Base URL of the sample backend that performs accept/decline (it holds the
+// OAuth secret the browser must never see).
+export const backendUrl = import.meta.env.VITE_BFF_URL ?? "http://localhost:8787";
