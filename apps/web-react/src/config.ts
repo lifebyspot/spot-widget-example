@@ -15,3 +15,6 @@ export const apiConfig: ApiConfig = {
 // Base URL of the sample backend that performs accept/decline (it holds the
 // OAuth secret the browser must never see).
 export const backendUrl = import.meta.env.VITE_BFF_URL ?? "http://localhost:8787";
+
+// Local dev aid: render from a fabricated quote instead of calling the API.
+export const useMockData = import.meta.env.VITE_SPOT_USE_MOCK === "true";

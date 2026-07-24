@@ -2,12 +2,20 @@ import type { RefObject } from "react";
 import ReactSpotWidget, {
   type ReactSpotWidgetRef,
 } from "@getspot/spot-widget-react";
-import type { ApiConfig, Quote, QuoteItem, SelectionData } from "@getspot/spot-widget";
+import type {
+  ApiConfig,
+  ApiResponse,
+  Quote,
+  QuoteItem,
+  SelectionData,
+} from "@getspot/spot-widget";
 
 interface WidgetPanelProps {
   widgetRef: RefObject<ReactSpotWidgetRef>;
   apiConfig: ApiConfig;
   quoteRequestData: QuoteItem;
+  useMockData: boolean;
+  mockData: ApiResponse;
   onQuoteRetrieved: (quote: Quote) => void;
   onOptIn: (data: SelectionData) => void;
   onOptOut: (data: SelectionData) => void;
@@ -17,13 +25,16 @@ interface WidgetPanelProps {
 
 /**
  * Hosts the widget and the partner's own checkout button. The widget only
- * captures a yes/no selection client-side; at checkout we validate it and read
- * it with getSelection(), then hand it up.
+ * captures a yes/no selection client-side. The checkout button is a real
+ * submit control, so the <form> in App.tsx handles submission and reads the
+ * selection.
  */
 export function WidgetPanel({
   widgetRef,
   apiConfig,
   quoteRequestData,
+  useMockData,
+  mockData,
   onQuoteRetrieved,
   onOptIn,
   onOptOut,
@@ -35,12 +46,15 @@ export function WidgetPanel({
       <div className="panel__header">
         <h2>Widget</h2>
       </div>
+
       <div className="widget-host">
         <ReactSpotWidget
           ref={widgetRef}
           apiConfig={apiConfig}
           quoteRequestData={quoteRequestData}
           showTable={false}
+          useMockData={useMockData}
+          mockData={mockData}
           onQuoteRetrieved={onQuoteRetrieved}
           onOptIn={onOptIn}
           onOptOut={onOptOut}
@@ -48,6 +62,7 @@ export function WidgetPanel({
           onNoMatchingQuote={onNoMatchingQuote}
         />
       </div>
+
       <button type="submit" className="button button--primary">
         Proceed to checkout
       </button>
