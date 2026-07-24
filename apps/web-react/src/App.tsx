@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { ReactSpotWidgetRef } from "@getspot/spot-widget-react";
-import type { QuoteItem } from "@getspot/spot-widget";
+import type { QuoteItem, SelectionData } from "@getspot/spot-widget";
 import { apiConfig } from "./config";
 import { buildDefaultQuoteRequest } from "./defaultQuote";
 import { QuoteForm } from "./components/QuoteForm";
@@ -9,8 +9,6 @@ import { PurchaserForm } from "./components/PurchaserForm";
 import type { Purchaser } from "./types";
 
 export function App() {
-  // Hold the initial quote request stable so editing the form never remounts
-  // the widget (which would lose the selection); re-quote via updateQuote().
   const initialQuoteRef = useRef<QuoteItem>(buildDefaultQuoteRequest());
   const widgetRef = useRef<ReactSpotWidgetRef>(null);
 
@@ -21,12 +19,19 @@ export function App() {
     lastName: "Purchaser",
     email: "test.purchaser@example.com",
   });
+  const [checkoutIntent, setCheckoutIntent] = useState<SelectionData | null>(null);
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(applied);
 
   async function handleApply() {
     setApplied(draft);
     await widgetRef.current?.updateQuote(draft);
+  }
+
+  // Read the selection at checkout. Still client-side; we send it to the
+  // backend in the next step.
+  function handleCheckout(selection: SelectionData | null) {
+    setCheckoutIntent(selection);
   }
 
   return (
@@ -60,7 +65,21 @@ export function App() {
             onOptOut={() => {}}
             onError={() => {}}
             onNoMatchingQuote={() => {}}
+            onCheckout={handleCheckout}
           />
+
+          {checkoutIntent && (
+            <section className="panel panel--seam">
+              <div className="panel__header">
+                <h2>Selection captured</h2>
+              </div>
+              <p className="muted">
+                status <code>{checkoutIntent.status}</code>, quote{" "}
+                <code>{checkoutIntent.quoteId ?? "(none)"}</code>. Next we send
+                this to the backend.
+              </p>
+            </section>
+          )}
         </div>
       </main>
     </div>

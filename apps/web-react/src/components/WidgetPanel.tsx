@@ -13,11 +13,13 @@ interface WidgetPanelProps {
   onOptOut: (data: SelectionData) => void;
   onError: (error: { message: string; status?: number }) => void;
   onNoMatchingQuote: (data: { status: string; data: unknown }) => void;
+  onCheckout: (selection: SelectionData | null) => void;
 }
 
 /**
- * Hosts the Spot widget. Its only job here is to request and render a quote;
- * capturing the customer's selection at checkout comes in the next step.
+ * Hosts the widget and the partner's own checkout button. The widget only
+ * captures a yes/no selection client-side; at checkout we validate it and read
+ * it with getSelection(), then hand it up.
  */
 export function WidgetPanel({
   widgetRef,
@@ -28,7 +30,13 @@ export function WidgetPanel({
   onOptOut,
   onError,
   onNoMatchingQuote,
+  onCheckout,
 }: WidgetPanelProps) {
+  function handleCheckout() {
+    if (!widgetRef.current?.validateSelection()) return;
+    onCheckout(widgetRef.current?.getSelection() ?? null);
+  }
+
   return (
     <section className="panel">
       <div className="panel__header">
@@ -47,6 +55,9 @@ export function WidgetPanel({
           onNoMatchingQuote={onNoMatchingQuote}
         />
       </div>
+      <button className="button button--primary" onClick={handleCheckout}>
+        Proceed to checkout
+      </button>
     </section>
   );
 }
