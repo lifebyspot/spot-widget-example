@@ -1272,5 +1272,5 @@ Open http://localhost:5180, watch the Widget events panel as you interact, and
 click **Simulate delivery** in the Webhooks panel to send a correctly signed
 event through the verify-and-display path.
 
-That's the finished app, the same code documented in
-[`README.md`](README.md) and [`WALKTHROUGH.md`](WALKTHROUGH.md).
+That's the finished app: the full quote, accept/decline, and webhook flow,
+working end to end.
