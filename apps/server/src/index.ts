@@ -3,6 +3,8 @@ import express from "express";
 import { config } from "./config.js";
 import { acceptQuote, declineQuote, type SpotCallResult } from "./spot/spotClient.js";
 import { verifySignature } from "./spot/webhookSignature.js";
+import { registerDemoRoutes } from "./demo/routes.js";
+import { recordEvent } from "./demo/webhookStore.js";
 
 interface RawBodyRequest extends express.Request {
   rawBody?: Buffer;
@@ -83,6 +85,11 @@ app.post("/webhooks", (req, res) => {
   const signature = req.header("X-Spot-Signature") ?? null;
   const verified = verifySignature(rawBody, signature ?? undefined);
 
+  // SAMPLE-APP ONLY: record the event (valid or not) so the demo's Webhooks
+  // panel can display it. A real integration would instead reject invalid
+  // events and run its business logic on valid ones.
+  recordEvent({ receivedAt: new Date().toISOString(), verified, signature, payload: req.body });
+
   if (!verified) {
     res.status(401).json({ error: "invalid or missing X-Spot-Signature" });
     return;
@@ -103,6 +110,12 @@ async function forward(
     res.status(502).json({ error: (error as Error).message });
   }
 }
+
+// ===========================================================================
+// Sample-app scaffolding. Everything below only exists to make the mini-app
+// demoable and is NOT part of a real integration. See demo/routes.ts.
+// ===========================================================================
+registerDemoRoutes(app);
 
 app.listen(config.port, () => {
   console.log(

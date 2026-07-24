@@ -1,4 +1,4 @@
-import type { QuoteItem } from "@getspot/spot-widget";
+import type { ApiResponse, QuoteItem } from "@getspot/spot-widget";
 
 function isoDaysFromNow(days: number): string {
   const millisecondsPerDay = 24 * 60 * 60 * 1000;
@@ -42,5 +42,37 @@ export function buildDefaultQuoteRequest(): QuoteItem {
     hostCountryState: "TX",
     destinations: ["US"],
     isPartialPayment: false,
+  };
+}
+
+/**
+ * Fallback quote used only when VITE_SPOT_USE_MOCK=true. Lets the UI render
+ * end to end even if the local API has no seeded offer for this partner.
+ */
+export function buildMockQuoteResponse(quoteRequest: QuoteItem): ApiResponse {
+  const spotPrice = Math.round(quoteRequest.productPrice * 0.07 * 100) / 100;
+  return {
+    status: "QUOTE_AVAILABLE",
+    data: {
+      id: "mock-quote-id",
+      spotPrice,
+      currencyCode: quoteRequest.currencyCode,
+      communication: {
+        name: "Booking Protection",
+        description: "Protect your booking against covered cancellations.",
+        bulletPoints: [
+          "Get your money back for covered reasons",
+          "Simple online claims",
+        ],
+        yesOptionText: `Yes, protect my booking for $${spotPrice}`,
+        noOptionText: "No, do not protect my booking",
+        legalDisclaimer:
+          'By selecting "Protect my Booking" you agree to the terms and conditions.',
+        termsAndConditionsUrl: "https://www.getspot.com/terms",
+      },
+      payoutSchedule: [
+        { text: "Full refund", percent: 100, amount: quoteRequest.productPrice },
+      ],
+    },
   };
 }
