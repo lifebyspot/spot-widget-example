@@ -2,14 +2,28 @@ import cors from "cors";
 import express from "express";
 import { config } from "./config.js";
 import { acceptQuote, declineQuote, type SpotCallResult } from "./spot/spotClient.js";
+import { verifySignature } from "./spot/webhookSignature.js";
+
+interface RawBodyRequest extends express.Request {
+  rawBody?: Buffer;
+}
 
 const app = express();
 app.use(cors({ origin: config.frontendOrigins }));
-app.use(express.json());
+// Keep the raw body alongside the parsed JSON so the webhook route can verify
+// the HMAC over exactly the bytes that were received.
+app.use(
+  express.json({
+    verify: (req, _res, buffer) => {
+      (req as RawBodyRequest).rawBody = buffer;
+    },
+  }),
+);
 
 // ===========================================================================
 // The actual Spot integration. This is the code a partner writes: exchange
-// credentials for a token and accept/decline quotes (spot/spotClient).
+// credentials for a token and accept/decline quotes (spot/spotClient), and
+// receive webhooks verifying the signature (spot/webhookSignature).
 // ===========================================================================
 
 /**
@@ -58,6 +72,22 @@ app.post("/decline", async (req, res) => {
     return;
   }
   await forward(res, () => declineQuote(quoteId, { transactionId }));
+});
+
+/**
+ * Receive an outbound Spot webhook: verify the signature over the raw body and
+ * respond (401 on a bad signature so a real sender retries).
+ */
+app.post("/webhooks", (req, res) => {
+  const rawBody = (req as RawBodyRequest).rawBody ?? Buffer.alloc(0);
+  const signature = req.header("X-Spot-Signature") ?? null;
+  const verified = verifySignature(rawBody, signature ?? undefined);
+
+  if (!verified) {
+    res.status(401).json({ error: "invalid or missing X-Spot-Signature" });
+    return;
+  }
+  res.status(200).json({ received: true });
 });
 
 /** Run a Spot call and mirror its status and body back to the caller. */
