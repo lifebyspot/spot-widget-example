@@ -634,6 +634,16 @@ is retrieved and carry it through to the point where you call your backend.
 > and submit the new, non-expired `quoteId` instead. This matters most in
 > multi-step and form-based flows, where meaningful time can pass between
 > quoting and submitting.
+>
+> The sample does this in Step 3: it captures `expiresAt` in
+> `onQuoteRetrieved`, and `handleCheckout` re-quotes instead of submitting when
+> the stored quote has expired.
+>
+> Two things to know when you implement it. `expiresAt` arrives as an ISO8601
+> **string** over JSON, so compare with `new Date(expiresAt).getTime()`. And
+> `@getspot/spot-widget`'s published `Quote` type does not declare the field
+> yet, so TypeScript needs a small local extension — the widget passes the
+> quote payload through untouched, so the value is there at runtime.
 
 > ⚠️ **Re-quoting replaces the id.**
 > 
@@ -1008,31 +1018,64 @@ export function declineQuote(quoteId: string): Promise<CheckoutResult> {
 
 `src/App.tsx` now has `handleCheckout` call the BFF and render the response
 (enrollment id on accept; a "is the backend running?" hint if the request never
-lands):
+lands). It also guards the submit path against an expired quote: `expiresAt` is
+captured in `onQuoteRetrieved` and stored in a ref, and if it has passed by the
+time the customer submits, `handleCheckout` calls `updateQuote()` to re-quote
+and asks them to confirm again rather than sending an id Spot would reject:
 
 <details>
 <summary><code>apps/web-react/src/App.tsx</code> (changed)</summary>
 
 ```diff
-@@ -6,7 +6,7 @@ import { buildDefaultQuoteRequest } from "./defaultQuote";
+@@ -1,12 +1,32 @@
+ import { useRef, useState } from "react";
+ import type { ReactSpotWidgetRef } from "@getspot/spot-widget-react";
+-import type { QuoteItem, SelectionData } from "@getspot/spot-widget";
++import type { Quote, QuoteItem, SelectionData } from "@getspot/spot-widget";
+ import { apiConfig } from "./config";
+ import { buildDefaultQuoteRequest } from "./defaultQuote";
  import { QuoteForm } from "./components/QuoteForm";
  import { WidgetPanel } from "./components/WidgetPanel";
  import { PurchaserForm } from "./components/PurchaserForm";
 -import type { Purchaser } from "./types";
 +import { acceptQuote, declineQuote, type CheckoutResult, type Purchaser } from "./bff";
++
++/**
++ * Every quote carries an expiry, and Spot rejects an expired quote id. The API
++ * returns it as `expiresAt`, and the widget hands the quote payload through
++ * untouched, so the value is present at runtime — but the published `Quote`
++ * type does not declare it yet, hence this local extension.
++ *
++ * Note it arrives as an ISO8601 *string* over JSON, not a Date.
++ */
++type QuoteWithExpiry = Quote & { expiresAt?: string };
++
++/**
++ * True only when we know the quote has expired. If no expiry was supplied we
++ * let checkout proceed rather than blocking on a value we never saw.
++ */
++function isExpired(expiresAt: string | null): boolean {
++  if (!expiresAt) return false;
++  const at = new Date(expiresAt).getTime();
++  return Number.isFinite(at) && at <= Date.now();
++}
  
  export function App() {
    const initialQuoteRef = useRef<QuoteItem>(buildDefaultQuoteRequest());
-@@ -19,7 +19,7 @@ export function App() {
+@@ -19,7 +39,11 @@ export function App() {
      lastName: "Purchaser",
      email: "test.purchaser@example.com",
    });
 -  const [checkoutIntent, setCheckoutIntent] = useState<SelectionData | null>(null);
 +  const [checkoutResult, setCheckoutResult] = useState<CheckoutResult | null>(null);
++
++  // Latest quote's expiry, captured as soon as the quote is retrieved. A ref
++  // rather than state because only the submit handler reads it.
++  const quoteExpiryRef = useRef<string | null>(null);
  
    const dirty = JSON.stringify(draft) !== JSON.stringify(applied);
  
-@@ -28,10 +28,18 @@ export function App() {
+@@ -28,10 +52,35 @@ export function App() {
      await widgetRef.current?.updateQuote(draft);
    }
  
@@ -1043,6 +1086,23 @@ lands):
 +  async function handleCheckout(selection: SelectionData | null) {
 +    setCheckoutResult(null);
 +    if (!selection?.quoteId) return;
++
++    // Re-quote rather than submit an id Spot will reject. updateQuote() issues a
++    // fresh quote with a new id and fires onQuoteRetrieved again, which replaces
++    // the stored expiry; the customer then confirms against the new quote.
++    if (isExpired(quoteExpiryRef.current)) {
++      await widgetRef.current?.updateQuote(applied);
++      setCheckoutResult({
++        ok: false,
++        status: 0,
++        body: {
++          error:
++            "That quote had expired, so it was refreshed. Review the new quote and confirm again.",
++        },
++      });
++      return;
++    }
++
 +    try {
 +      const result =
 +        selection.status === "QUOTE_ACCEPTED"
@@ -1055,7 +1115,18 @@ lands):
    }
  
    return (
-@@ -68,16 +76,17 @@ export function App() {
+@@ -60,7 +109,9 @@ export function App() {
+             widgetRef={widgetRef}
+             apiConfig={apiConfig}
+             quoteRequestData={initialQuoteRef.current}
+-            onQuoteRetrieved={() => {}}
++            onQuoteRetrieved={(quote) => {
++              quoteExpiryRef.current = (quote as QuoteWithExpiry).expiresAt ?? null;
++            }}
+             onOptIn={() => {}}
+             onOptOut={() => {}}
+             onError={() => {}}
+@@ -68,16 +119,17 @@ export function App() {
              onCheckout={handleCheckout}
            />
  
