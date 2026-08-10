@@ -888,7 +888,7 @@ body back:
 <summary><code>apps/server/src/index.ts</code> (changed)</summary>
 
 ```diff
-@@ -1,14 +1,84 @@
+@@ -1,14 +1,81 @@
  import cors from "cors";
  import express from "express";
  import { config } from "./config.js";
@@ -920,11 +920,9 @@ body back:
 +    return;
 +  }
 +
-+  // Idempotency keys. Spot recognises a repeat of the same transactionId as one
-+  // transaction rather than creating a second enrollment, so a retried request
-+  // cannot double-charge — but only while the id stays the same. Minting one per
-+  // request would make every retry look like a new purchase, so the caller must
-+  // supply an id that is stable for the order (its own order id, ideally).
++  // Spot dedupes repeats of the same transactionId, so a retry cannot
++  // double-charge. That needs a stable id, so require one rather than minting a
++  // fresh UUID per request.
 +  if (!transactionId) {
 +    res.status(400).json({
 +      error: "transactionId is required and must be stable across retries of the same order",
@@ -935,8 +933,7 @@ body back:
 +    productPrice,
 +    purchaser,
 +    transactionId,
-+    // One key per cart line. This sample quotes a single item, so it derives the
-+    // item key from the order key; a multi-item cart needs one per line.
++    // One key per cart line; this sample has a single item.
 +    transactionItemId: transactionItemId ?? `${transactionId}-1`,
 +  };
 +
@@ -1030,9 +1027,7 @@ async function post(path: string, payload: unknown): Promise<CheckoutResult> {
 
 /**
  * Ask the backend to accept (bind) the quote. Creates coverage.
- *
- * `transactionId` is the idempotency key and must stay stable across retries of
- * the same order — see the note in App.tsx.
+ * `transactionId` is the idempotency key; see App.tsx.
  */
 export function acceptQuote(
   quoteId: string,
@@ -1067,7 +1062,7 @@ and asks them to confirm again rather than sending an id Spot would reject:
 <summary><code>apps/web-react/src/App.tsx</code> (changed)</summary>
 
 ```diff
-@@ -1,12 +1,32 @@
+@@ -1,12 +1,25 @@
  import { useRef, useState } from "react";
  import type { ReactSpotWidgetRef } from "@getspot/spot-widget-react";
 -import type { QuoteItem, SelectionData } from "@getspot/spot-widget";
@@ -1081,19 +1076,12 @@ and asks them to confirm again rather than sending an id Spot would reject:
 +import { acceptQuote, declineQuote, type CheckoutResult, type Purchaser } from "./bff";
 +
 +/**
-+ * Every quote carries an expiry, and Spot rejects an expired quote id. The API
-+ * returns it as `expiresAt`, and the widget hands the quote payload through
-+ * untouched, so the value is present at runtime — but the published `Quote`
-+ * type does not declare it yet, hence this local extension.
-+ *
-+ * Note it arrives as an ISO8601 *string* over JSON, not a Date.
++ * The API returns `expiresAt` and the widget passes the quote through untouched,
++ * but the published `Quote` type omits it. ISO8601 string, not a Date.
 + */
 +type QuoteWithExpiry = Quote & { expiresAt?: string };
 +
-+/**
-+ * True only when we know the quote has expired. If no expiry was supplied we
-+ * let checkout proceed rather than blocking on a value we never saw.
-+ */
++/** True only when the quote is known to have expired; unknown means proceed. */
 +function isExpired(expiresAt: string | null): boolean {
 +  if (!expiresAt) return false;
 +  const at = new Date(expiresAt).getTime();
@@ -1102,33 +1090,26 @@ and asks them to confirm again rather than sending an id Spot would reject:
  
  export function App() {
    const initialQuoteRef = useRef<QuoteItem>(buildDefaultQuoteRequest());
-@@ -19,7 +39,24 @@ export function App() {
+@@ -19,7 +32,17 @@ export function App() {
      lastName: "Purchaser",
      email: "test.purchaser@example.com",
    });
 -  const [checkoutIntent, setCheckoutIntent] = useState<SelectionData | null>(null);
 +  const [checkoutResult, setCheckoutResult] = useState<CheckoutResult | null>(null);
 +
-+  // Latest quote's expiry, captured as soon as the quote is retrieved. A ref
-+  // rather than state because only the submit handler reads it.
++  // Only the submit handler reads this, so a ref rather than state.
 +  const quoteExpiryRef = useRef<string | null>(null);
 +
 +  /**
-+   * Idempotency key for this order. Spot treats `transactionId` as an
-+   * idempotency key: submitting the same id twice is recognised as one
-+   * transaction instead of creating a second enrollment, so a retried request
-+   * cannot double-charge. That only holds if the id is *stable* — generating a
-+   * fresh one per attempt (as a `randomUUID()` fallback on the server would)
-+   * defeats the mechanism entirely.
-+   *
-+   * Here it is created once per checkout session. A real integration should
-+   * send its own order id, which is naturally stable across retries.
++   * Idempotency key. Spot dedupes repeat submissions of the same transactionId,
++   * so it must stay stable across retries. Real integrations should send their
++   * own order id.
 +   */
 +  const transactionIdRef = useRef<string>(crypto.randomUUID());
  
    const dirty = JSON.stringify(draft) !== JSON.stringify(applied);
  
-@@ -28,10 +65,56 @@ export function App() {
+@@ -28,10 +51,54 @@ export function App() {
      await widgetRef.current?.updateQuote(draft);
    }
  
@@ -1140,9 +1121,8 @@ and asks them to confirm again rather than sending an id Spot would reject:
 +    setCheckoutResult(null);
 +    if (!selection?.quoteId) return;
 +
-+    // Never submit a quote for a booking the customer has since edited. The
-+    // quote describes `applied`; unapplied edits in `draft` have not been
-+    // quoted, so send them through updateQuote() first.
++    // The quote describes `applied`; unapplied edits in `draft` were never
++    // quoted, so re-quote before submitting.
 +    if (dirty) {
 +      setCheckoutResult({
 +        ok: false,
@@ -1155,9 +1135,8 @@ and asks them to confirm again rather than sending an id Spot would reject:
 +      return;
 +    }
 +
-+    // Re-quote rather than submit an id Spot will reject. updateQuote() issues a
-+    // fresh quote with a new id and fires onQuoteRetrieved again, which replaces
-+    // the stored expiry; the customer then confirms against the new quote.
++    // Re-quote rather than submit an id Spot will reject. updateQuote() fires
++    // onQuoteRetrieved again, refreshing the stored expiry.
 +    if (isExpired(quoteExpiryRef.current)) {
 +      const requoted = await widgetRef.current?.updateQuote(applied);
 +      setCheckoutResult({
@@ -1189,7 +1168,7 @@ and asks them to confirm again rather than sending an id Spot would reject:
    }
  
    return (
-@@ -60,7 +143,9 @@ export function App() {
+@@ -60,7 +127,9 @@ export function App() {
              widgetRef={widgetRef}
              apiConfig={apiConfig}
              quoteRequestData={initialQuoteRef.current}
@@ -1200,7 +1179,7 @@ and asks them to confirm again rather than sending an id Spot would reject:
              onOptIn={() => {}}
              onOptOut={() => {}}
              onError={() => {}}
-@@ -68,16 +153,17 @@ export function App() {
+@@ -68,16 +137,17 @@ export function App() {
              onCheckout={handleCheckout}
            />
  
@@ -1336,7 +1315,7 @@ on success and `401` on a bad or missing signature (so a real sender retries):
  // ===========================================================================
  
  /**
-@@ -63,6 +77,22 @@ app.post("/decline", async (req, res) => {
+@@ -60,6 +74,22 @@ app.post("/decline", async (req, res) => {
    await forward(res, () => declineQuote(quoteId, { transactionId }));
  });
  
