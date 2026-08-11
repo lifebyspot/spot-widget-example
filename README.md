@@ -6,7 +6,8 @@ Express backend that makes the authenticated accept/decline calls and receives
 webhooks. Together they exercise the full quote → accept/decline → webhook flow.
 
 - **Want to learn the integration?** Build it up one concept at a time by
-  following [`QUICKSTART.md`](QUICKSTART.md).
+  following the [Widget Quickstart](https://docs.getspot.com/docs/widget-quickstart), which walks through this repo
+  commit by commit.
 - **Just want to run the finished app?** Read on.
 
 ## What's here
@@ -79,4 +80,6 @@ checkout your app sends that choice to your own backend, which holds the OAuth
 secret and calls Spot's `POST /api/v1/quote/{id}/accept` or `/decline`. Spot
 then delivers signed webhooks (e.g. claims) to your backend.
 
-For the full step-by-step walkthrough see [`QUICKSTART.md`](QUICKSTART.md).
+For the full step-by-step walkthrough see the [Widget Quickstart](https://docs.getspot.com/docs/widget-quickstart).
+Each step there corresponds to one of the `quickstart-step-*` tags in this
+repository.
