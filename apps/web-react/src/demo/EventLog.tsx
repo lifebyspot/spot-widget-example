@@ -19,7 +19,7 @@ export function EventLog({ entries, onClear }: EventLogProps) {
     <section className="panel">
       <div className="panel__header">
         <h2>Widget events</h2>
-        <button className="button button--ghost" onClick={onClear}>
+        <button type="button" className="button button--ghost" onClick={onClear}>
           Clear
         </button>
       </div>

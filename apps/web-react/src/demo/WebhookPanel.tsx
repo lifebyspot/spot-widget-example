@@ -48,13 +48,14 @@ export function WebhookPanel() {
         <h2>Webhooks</h2>
         <div className="panel__actions">
           <button
+            type="button"
             className="button button--ghost"
             onClick={handleSimulate}
             disabled={simulating}
           >
             {simulating ? "Sending..." : "Simulate delivery"}
           </button>
-          <button className="button button--ghost" onClick={handleClear}>
+          <button type="button" className="button button--ghost" onClick={handleClear}>
             Clear
           </button>
         </div>

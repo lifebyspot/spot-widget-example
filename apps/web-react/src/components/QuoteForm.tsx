@@ -189,6 +189,7 @@ export function QuoteForm({ value, onChange, onApply, dirty }: QuoteFormProps) {
       </div>
 
       <button
+        type="button"
         className="button button--primary"
         onClick={onApply}
         disabled={!dirty}

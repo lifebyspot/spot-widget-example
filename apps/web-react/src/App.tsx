@@ -68,6 +68,17 @@ export function App() {
     await widgetRef.current?.updateQuote(draft);
   }
 
+  /**
+   * Real checkouts are forms, so the widget is mounted inside one here and the
+   * checkout button is a submit control. Enter in any field submits too, which
+   * is why every other button in the app sets type="button".
+   */
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!widgetRef.current?.validateSelection()) return;
+    await handleCheckout(widgetRef.current?.getSelection() ?? null);
+  }
+
   async function handleCheckout(selection: SelectionData | null) {
     setCheckoutResult(null);
     addLog("checkout: selection read", selection);
@@ -138,49 +149,50 @@ export function App() {
         </div>
       </header>
 
-      <main className="app__grid">
-        <div className="app__column">
-          <QuoteForm value={draft} onChange={setDraft} onApply={handleApply} dirty={dirty} />
-          <PurchaserForm value={purchaser} onChange={setPurchaser} />
-        </div>
+      <main>
+        <form className="app__grid" onSubmit={handleSubmit}>
+          <div className="app__column">
+            <QuoteForm value={draft} onChange={setDraft} onApply={handleApply} dirty={dirty} />
+            <PurchaserForm value={purchaser} onChange={setPurchaser} />
+          </div>
 
-        <div className="app__column">
-          <WidgetPanel
-            widgetRef={widgetRef}
-            apiConfig={apiConfig}
-            quoteRequestData={initialQuoteRef.current}
-            useMockData={useMockData}
-            mockData={mockData}
-            onQuoteRetrieved={(quote) => {
-              quoteExpiryRef.current = (quote as QuoteWithExpiry).expiresAt ?? null;
-              addLog("onQuoteRetrieved", quote);
-            }}
-            onOptIn={(data) => addLog("onOptIn (accepted)", data)}
-            onOptOut={(data) => addLog("onOptOut (declined)", data)}
-            onError={(error) => addLog("onError", error)}
-            onNoMatchingQuote={(data) => addLog("onNoMatchingQuote", data)}
-            onCheckout={handleCheckout}
-          />
+          <div className="app__column">
+            <WidgetPanel
+              widgetRef={widgetRef}
+              apiConfig={apiConfig}
+              quoteRequestData={initialQuoteRef.current}
+              useMockData={useMockData}
+              mockData={mockData}
+              onQuoteRetrieved={(quote) => {
+                quoteExpiryRef.current = (quote as QuoteWithExpiry).expiresAt ?? null;
+                addLog("onQuoteRetrieved", quote);
+              }}
+              onOptIn={(data) => addLog("onOptIn (accepted)", data)}
+              onOptOut={(data) => addLog("onOptOut (declined)", data)}
+              onError={(error) => addLog("onError", error)}
+              onNoMatchingQuote={(data) => addLog("onNoMatchingQuote", data)}
+            />
 
-          {checkoutResult && (
-            <section className="panel panel--seam">
-              <div className="panel__header">
-                <h2>Backend response</h2>
-              </div>
-              <p className={checkoutResult.ok ? "notice notice--ok" : "notice notice--error"}>
-                {checkoutResult.status === 0
-                  ? "Could not reach the backend. Is it running?"
-                  : `HTTP ${checkoutResult.status}${checkoutResult.ok ? " (success)" : ""}`}
-              </p>
-              <pre className="log__detail">{JSON.stringify(checkoutResult.body, null, 2)}</pre>
-            </section>
-          )}
-        </div>
+            {checkoutResult && (
+              <section className="panel panel--seam">
+                <div className="panel__header">
+                  <h2>Backend response</h2>
+                </div>
+                <p className={checkoutResult.ok ? "notice notice--ok" : "notice notice--error"}>
+                  {checkoutResult.status === 0
+                    ? "Could not reach the backend. Is it running?"
+                    : `HTTP ${checkoutResult.status}${checkoutResult.ok ? " (success)" : ""}`}
+                </p>
+                <pre className="log__detail">{JSON.stringify(checkoutResult.body, null, 2)}</pre>
+              </section>
+            )}
+          </div>
 
-        <div className="app__column">
-          <EventLog entries={entries} onClear={() => setEntries([])} />
-          <WebhookPanel />
-        </div>
+          <div className="app__column">
+            <EventLog entries={entries} onClear={() => setEntries([])} />
+            <WebhookPanel />
+          </div>
+        </form>
       </main>
     </div>
   );

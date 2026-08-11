@@ -21,14 +21,13 @@ interface WidgetPanelProps {
   onOptOut: (data: SelectionData) => void;
   onError: (error: { message: string; status?: number }) => void;
   onNoMatchingQuote: (data: { status: string; data: unknown }) => void;
-  onCheckout: (selection: SelectionData | null) => void;
 }
 
 /**
  * Hosts the widget and the partner's own checkout button. The widget only
- * captures a yes/no selection client-side; at checkout we validate it (the
- * widget shows its own inline error if nothing is picked), read it with
- * getSelection(), and hand it up to be sent to the backend.
+ * captures a yes/no selection client-side. The checkout button is a real
+ * submit control, so the surrounding <form> in App.tsx handles submission and
+ * reads the selection.
  */
 export function WidgetPanel({
   widgetRef,
@@ -41,13 +40,7 @@ export function WidgetPanel({
   onOptOut,
   onError,
   onNoMatchingQuote,
-  onCheckout,
 }: WidgetPanelProps) {
-  function handleCheckout() {
-    if (!widgetRef.current?.validateSelection()) return;
-    onCheckout(widgetRef.current?.getSelection() ?? null);
-  }
-
   return (
     <section className="panel">
       <div className="panel__header">
@@ -70,7 +63,7 @@ export function WidgetPanel({
         />
       </div>
 
-      <button className="button button--primary" onClick={handleCheckout}>
+      <button type="submit" className="button button--primary">
         Proceed to checkout
       </button>
     </section>
