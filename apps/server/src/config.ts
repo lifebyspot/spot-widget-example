@@ -21,6 +21,10 @@ export const config = {
   // only lets the local self-signed simulation round-trip.
   webhookHmacSecret: process.env.SPOT_WEBHOOK_HMAC_SECRET ?? "local-dev-hmac-secret",
   port: Number(process.env.PORT ?? 8787),
+  // When set, this backend also serves the built frontend from this directory,
+  // so the whole demo runs as one container on one origin. Local dev leaves it
+  // unset and lets Vite serve the frontend on its own port.
+  publicDir: process.env.PUBLIC_DIR,
   // Both sample frontends may call the backend: React (5180) and vanilla (5181).
   frontendOrigins: (
     process.env.FRONTEND_ORIGIN ?? "http://localhost:5180,http://localhost:5181"

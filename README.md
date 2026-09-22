@@ -72,6 +72,44 @@ pnpm dev
 VITE_SPOT_USE_MOCK=true pnpm dev
 ```
 
+## Run it as a single container
+
+The two-process setup above is what the Quickstart teaches, and it is what you
+want while developing. For a deployed demo it is simpler to run the whole thing
+as one container: the Express backend also serves the built React bundle, so
+there is one origin, one port, and no CORS to configure.
+
+```bash
+docker build \
+  --build-arg VITE_SPOT_PARTNER_ID=<your-sandbox-partner-id> \
+  -t spot-widget-example .
+
+docker run -p 8787:8787 \
+  -e SPOT_PARTNER_ID=<your-sandbox-partner-id> \
+  -e SPOT_CLIENT_ID=<your-client-id> \
+  -e SPOT_CLIENT_SECRET=<your-client-secret> \
+  -e SPOT_WEBHOOK_HMAC_SECRET=<your-hmac-secret> \
+  spot-widget-example
+```
+
+Then open http://localhost:8787.
+
+Two things to note about the split between build time and run time:
+
+- The **partner id and environment are baked into the bundle at build time**,
+  because the widget reads them in the browser. Both are public values. Pointing
+  the image at a different partner or environment means rebuilding it.
+- The **secrets are runtime environment variables** and never enter the image.
+  The `.dockerignore` excludes `.env` files so a local one cannot be copied in
+  by accident.
+
+The container sets `PUBLIC_DIR`, which is what tells the backend to serve the
+frontend. Leave it unset and the backend behaves exactly as it does in local
+development.
+
+To receive real webhooks the container has to be reachable from the internet,
+and you register that URL once with `POST /api/v1/enrollments/webhooks`.
+
 ## How it works, briefly
 
 The widget requests a quote directly from Spot in the browser using only your
