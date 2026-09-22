@@ -25,6 +25,10 @@ export const config = {
   // so the whole demo runs as one container on one origin. Local dev leaves it
   // unset and lets Vite serve the frontend on its own port.
   publicDir: process.env.PUBLIC_DIR,
+  // SAMPLE-APP ONLY: replace purchaser details before they reach Spot. Set only
+  // on the public hosted demo, where strangers type into the form. A real
+  // integration must send the real purchaser. See demo/scrubPurchaser.ts.
+  scrubPurchaser: process.env.DEMO_SCRUB_PURCHASER === "true",
   // Both sample frontends may call the backend: React (5180) and vanilla (5181).
   frontendOrigins: (
     process.env.FRONTEND_ORIGIN ?? "http://localhost:5180,http://localhost:5181"

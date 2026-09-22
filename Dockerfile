@@ -25,6 +25,9 @@ ARG VITE_SPOT_PARTNER_ID
 ENV VITE_SPOT_ENV=$VITE_SPOT_ENV
 ENV VITE_SPOT_PARTNER_ID=$VITE_SPOT_PARTNER_ID
 ENV VITE_BFF_URL=""
+# Public demo: tell visitors their purchaser details are replaced before they
+# reach Spot. DEMO_SCRUB_PURCHASER below is what actually replaces them.
+ENV VITE_DEMO_NOTICE="true"
 RUN pnpm --filter web-react build
 
 # ---------------------------------------------------------------------------
@@ -45,6 +48,8 @@ COPY --from=build /app/apps/web-react/dist ./public
 ENV NODE_ENV=production
 ENV PUBLIC_DIR=/app/public
 ENV PORT=8787
+# Public demo only: never send a visitor's real name or email to Spot.
+ENV DEMO_SCRUB_PURCHASER="true"
 EXPOSE 8787
 
 # Secrets come from the platform at runtime, never from this image:

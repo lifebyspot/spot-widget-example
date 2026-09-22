@@ -6,6 +6,7 @@ import { acceptQuote, declineQuote, type SpotCallResult } from "./spot/spotClien
 import { verifySignature } from "./spot/webhookSignature.js";
 import { registerDemoRoutes } from "./demo/routes.js";
 import { recordEvent } from "./demo/webhookStore.js";
+import { scrubbedPurchaser } from "./demo/scrubPurchaser.js";
 
 interface RawBodyRequest extends express.Request {
   rawBody?: Buffer;
@@ -51,9 +52,16 @@ app.post("/accept", async (req, res) => {
     });
     return;
   }
+  // SAMPLE-APP ONLY: the hosted demo swaps in placeholder purchaser details so
+  // no visitor's personal data is stored. Off by default; real integrations
+  // send the real purchaser.
+  const outboundPurchaser = config.scrubPurchaser
+    ? scrubbedPurchaser(transactionId)
+    : purchaser;
+
   const payload = {
     productPrice,
-    purchaser,
+    purchaser: outboundPurchaser,
     transactionId,
     // One key per cart line; this sample has a single item.
     transactionItemId: transactionItemId ?? `${transactionId}-1`,
