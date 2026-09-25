@@ -1,4 +1,5 @@
 import type { Purchaser } from "../bff";
+import { showDemoPrivacyNotice } from "../config";
 
 interface PurchaserFormProps {
   value: Purchaser;
@@ -49,6 +50,14 @@ export function PurchaserForm({ value, onChange }: PurchaserFormProps) {
           onChange={(event) => update("email", event.target.value)}
         />
       </div>
+      {showDemoPrivacyNotice && (
+        <p className="muted">
+          This is a public demo. Whatever you enter here stays in your browser:
+          the details are replaced with placeholders before anything is sent to
+          Spot, so no personal information is stored. Nothing here creates real
+          coverage.
+        </p>
+      )}
     </section>
   );
 }

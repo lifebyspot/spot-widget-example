@@ -1,3 +1,4 @@
+import path from "node:path";
 import cors from "cors";
 import express from "express";
 import { config } from "./config.js";
@@ -5,6 +6,7 @@ import { acceptQuote, declineQuote, type SpotCallResult } from "./spot/spotClien
 import { verifySignature } from "./spot/webhookSignature.js";
 import { registerDemoRoutes } from "./demo/routes.js";
 import { recordEvent } from "./demo/webhookStore.js";
+import { scrubbedPurchaser } from "./demo/scrubPurchaser.js";
 
 interface RawBodyRequest extends express.Request {
   rawBody?: Buffer;
@@ -50,9 +52,16 @@ app.post("/accept", async (req, res) => {
     });
     return;
   }
+  // SAMPLE-APP ONLY: the hosted demo swaps in placeholder purchaser details so
+  // no visitor's personal data is stored. Off by default; real integrations
+  // send the real purchaser.
+  const outboundPurchaser = config.scrubPurchaser
+    ? scrubbedPurchaser(transactionId)
+    : purchaser;
+
   const payload = {
     productPrice,
-    purchaser,
+    purchaser: outboundPurchaser,
     transactionId,
     // One key per cart line; this sample has a single item.
     transactionItemId: transactionItemId ?? `${transactionId}-1`,
@@ -114,6 +123,20 @@ async function forward(
 // demoable and is NOT part of a real integration. See demo/routes.ts.
 // ===========================================================================
 registerDemoRoutes(app);
+
+// ===========================================================================
+// Deployment: serve the built frontend from this same process so the hosted
+// demo is one container on one origin. Unset PUBLIC_DIR locally; the Quickstart
+// runs Vite and this backend as two processes instead.
+// ===========================================================================
+if (config.publicDir) {
+  const publicDir = path.resolve(config.publicDir);
+  app.use(express.static(publicDir));
+  // Anything not matched above is the single-page app.
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(publicDir, "index.html"));
+  });
+}
 
 app.listen(config.port, () => {
   console.log(

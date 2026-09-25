@@ -16,5 +16,11 @@ export const apiConfig: ApiConfig = {
 // OAuth secret the browser must never see).
 export const backendUrl = import.meta.env.VITE_BFF_URL ?? "http://localhost:8787";
 
+// SAMPLE-APP ONLY: set on the public hosted demo to show a notice explaining
+// that purchaser details are replaced before they reach Spot. The backend does
+// the actual replacing; this only tells the visitor about it.
+export const showDemoPrivacyNotice =
+  import.meta.env.VITE_DEMO_NOTICE === "true";
+
 // Local dev aid: render from a fabricated quote instead of calling the API.
 export const useMockData = import.meta.env.VITE_SPOT_USE_MOCK === "true";
