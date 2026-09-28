@@ -5,10 +5,14 @@ the widget and captures the customer's accept/decline choice, plus a small
 Express backend that makes the authenticated accept/decline calls and receives
 webhooks. Together they exercise the full quote → accept/decline → webhook flow.
 
+- **Just want to see it work?** A deployed copy of this app runs at
+  [widget-demo.sandbox.getspot.com](https://widget-demo.sandbox.getspot.com),
+  against Spot Sandbox with credentials we provide. No clone, no credentials of
+  your own, nothing to set up.
 - **Want to learn the integration?** Build it up one concept at a time by
   following the [Widget Quickstart](https://docs.getspot.com/docs/widget-quickstart), which walks through this repo
   commit by commit.
-- **Just want to run the finished app?** Read on.
+- **Want to run the finished app yourself?** Read on.
 
 ## What's here
 
@@ -25,6 +29,11 @@ webhooks. Together they exercise the full quote → accept/decline → webhook f
   client secret. These are provisioned by Spot per environment — request them
   from your Spot contact (there is no self-serve signup yet). The partner id is
   public; the client id and secret are secret and stay on your backend.
+
+Waiting on credentials? The [hosted demo](https://widget-demo.sandbox.getspot.com)
+runs this same code against Sandbox using ours, so you can try the whole flow
+first. Nothing there creates real coverage, and purchaser details are replaced
+with placeholders before they reach Spot.
 
 ## Run the finished app
 
