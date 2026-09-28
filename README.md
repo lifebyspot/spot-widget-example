@@ -80,7 +80,7 @@ as one container: the Express backend also serves the built React bundle, so
 there is one origin, one port, and no CORS to configure.
 
 ```bash
-docker build \
+docker build --platform linux/amd64 --provenance=false --sbom=false \
   --build-arg VITE_SPOT_PARTNER_ID=<your-sandbox-partner-id> \
   -t spot-widget-example .
 
@@ -93,6 +93,17 @@ docker run -p 8787:8787 \
 ```
 
 Then open http://localhost:8787.
+
+Those two build flags matter when the image is destined for a container host
+rather than your own machine, and neither failure is obvious from the error:
+
+- `--platform linux/amd64` builds for the architecture most hosts run. Building
+  on an Apple Silicon Mac otherwise produces an arm64 image that the host
+  rejects after a successful push.
+- `--provenance=false --sbom=false` keep buildx from wrapping the image in an
+  OCI index alongside an attestation manifest. Some hosts, AWS Lambda among
+  them, refuse an image in that shape. Drop both flags if you are only running
+  the container locally.
 
 Two things to note about the split between build time and run time:
 
